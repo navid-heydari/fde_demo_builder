@@ -1,5 +1,7 @@
 # FDE Demo Builder
 
+*Created by **Ahmed Awan — Forward Deployed Engineering Team.***
+
 A Claude Code plugin that turns a **raw screen recording** of a product/customer demo into a
 **polished, voice‑narrated, privacy‑scrubbed demo video** — with an optional animated opener/outro —
 **entirely from scripts**. No video editor, no manual timeline. Edit a config, run one command, get a
