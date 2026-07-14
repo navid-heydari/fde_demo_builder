@@ -1,0 +1,8 @@
+# Python deps for the demo builder
+edge-tts>=7.0        # neural text-to-speech for narration
+# faster-whisper>=1.0  # optional: word-timestamps to sync opener/outro beats to VO
+
+# Also required on PATH (not pip):
+#   ffmpeg + ffprobe  (>= 6)
+# For animated opener/outro (optional), install with npm in the project folder:
+#   npm i puppeteer puppeteer-screen-recorder

@@ -1,0 +1,10 @@
+{
+  "name": "fde-demo-builder",
+  "version": "0.1.0",
+  "description": "Turn a raw screen recording into a polished, VO-narrated, privacy-scrubbed demo video — fully scripted (ffmpeg + edge-tts + headless Chrome), no video editor. Built for FDE product demos.",
+  "author": {
+    "name": "Ahmed Awan - Forward Deployed Engineering Team",
+    "email": "232676096+ahmedawan-oracle@users.noreply.github.com"
+  },
+  "keywords": ["demo", "video", "ffmpeg", "voiceover", "edge-tts", "screen-recording", "fde"]
+}

@@ -1,0 +1,52 @@
+<!doctype html>
+<!--
+  opener.example.html — a clean, generic animated title card (1920x1080).
+  Rendered to MP4 by render_bookend.js, which calls window.__start() once recording begins.
+  Replace TITLE / SUBTITLE / TAGLINE and the accent color with your own. No customer names.
+-->
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden;
+    background: radial-gradient(1200px 700px at 50% 38%, #14213a 0%, #0a0f1e 60%, #070b16 100%);
+    font-family: "Segoe UI", Arial, sans-serif; color: #eef2fb; }
+  .wrap { position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; }
+  .kicker { letter-spacing: .42em; font-size: 22px; color: #7fa7ff; text-transform: uppercase;
+    opacity: 0; transform: translateY(12px); }
+  .title { font-size: 92px; font-weight: 800; margin: 18px 0 0; opacity: 0; transform: translateY(16px); }
+  .title .accent { color: #ff6a3d; }
+  .sub { font-size: 30px; color: #c3ccdf; margin-top: 20px; opacity: 0; transform: translateY(14px); }
+  .rule { width: 0; height: 3px; margin: 40px auto 0;
+    background: linear-gradient(90deg, transparent, #ff6a3d, transparent); }
+  .tag { position: absolute; bottom: 90px; width: 100%; text-align: center; font-size: 24px;
+    color: #9fb0d0; letter-spacing: .06em; opacity: 0; }
+  .fx { transition: opacity .8s ease, transform .8s ease, width 1s ease; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="kicker fx" id="kicker">Product Demo</div>
+    <div class="title fx" id="title">From a question to a <span class="accent">decision</span></div>
+    <div class="sub fx" id="sub">Grounded &middot; Governed &middot; Fast</div>
+    <div class="rule fx" id="rule"></div>
+  </div>
+  <div class="tag fx" id="tag">A scripted demo &middot; built with FDE Demo Builder</div>
+
+<script>
+  function show(el, extra) { el.style.opacity = 1; el.style.transform = "translateY(0)"; if (extra) extra(); }
+  // Called by render_bookend.js AFTER recording starts, so beats align with the video clock.
+  window.__start = function () {
+    const k = document.getElementById("kicker"), t = document.getElementById("title"),
+          s = document.getElementById("sub"), r = document.getElementById("rule"),
+          g = document.getElementById("tag");
+    setTimeout(() => show(k), 300);
+    setTimeout(() => show(t), 900);
+    setTimeout(() => show(s), 1700);
+    setTimeout(() => { r.style.width = "420px"; }, 2300);
+    setTimeout(() => show(g), 3200);
+  };
+</script>
+</body>
+</html>

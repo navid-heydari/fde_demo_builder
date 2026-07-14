@@ -1,0 +1,23 @@
+# Generated demo artifacts (never commit recordings, narration, or renders)
+recording.mp4
+*.mov
+out/
+vo/
+*.wav
+
+# Python / Node
+__pycache__/
+*.pyc
+node_modules/
+package-lock.json
+
+# Secrets / env
+.env
+*.pem
+wallet/
+conn.json
+
+# Editor / agent / MCP config — never publish (may contain OCIDs, workspace IDs, tokens)
+.claude/
+.mcp.json
+*.ocid
