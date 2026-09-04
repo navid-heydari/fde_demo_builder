@@ -68,9 +68,7 @@ Version 2 adds a second workflow that turns an existing demo (slides + screen re
   (`assemble.example.sh`).
 
 Method docs: [references/broll-scenes.md](skills/demo-video-builder/references/broll-scenes.md) ·
-[references/multi-voice.md](skills/demo-video-builder/references/multi-voice.md). All examples use
-fictional brands and synthetic data — keep it that way in your demos: **no customer names or
-internal identifiers, ever.**
+[references/multi-voice.md](skills/demo-video-builder/references/multi-voice.md).
 
 ## Quickstart
 
