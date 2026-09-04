@@ -46,7 +46,31 @@ Once installed you get:
 
 - **Skill** `demo-video-builder` — the full methodology; Claude follows it when you ask to build a demo video.
 - **Command** `/fde-demo-builder:new-demo <name>` — scaffolds a new demo project (scripts + starter config).
+- **Command** `/fde-demo-builder:new-broll <name>` — *(v2)* scaffolds a story-rebuild project (b-roll scenes + multi-voice).
 - **Agent** `demo-qa-reviewer` — adversarially QAs a finished video (privacy, VO‑sync, readability, playback).
+
+## v2 — Story rebuilds (b-roll + multi-voice)
+
+Version 2 adds a second workflow that turns an existing demo (slides + screen recording) into a
+**cinematic film**: animated story acts around the real footage, narrated by a cast of voices.
+
+- **B-roll story scenes** — clock-driven HTML/Canvas acts (problem-statement openers, interstitials,
+  finales) where every element is keyed to the *spoken word* via edge-tts word timestamps: title
+  reveals, stat cards, character "voice moment" cards, particle/flake fields, rain, animated charts,
+  and Ken Burns cameras with spotlights over a real architecture diagram. QA with deterministic
+  stills (`shot.js`), render once (`render_scene.js`).
+- **Multi-voice narration** — cast a narrator, a guide, and a character voice
+  (`gen_vo_multivoice.py` + `vo_script.py`); optional handheld-radio treatment for field/ops lines.
+- **Placed re-voicing** — pin new narration beats at the original beat offsets of an existing
+  recording so every line still lands on its on-screen action, with per-beat time budgets and
+  automatic rate-bumping.
+- **Assembly** — VO-length-derived trims, segment concat, one loudness pass
+  (`assemble.example.sh`).
+
+Method docs: [references/broll-scenes.md](skills/demo-video-builder/references/broll-scenes.md) ·
+[references/multi-voice.md](skills/demo-video-builder/references/multi-voice.md). All examples use
+fictional brands and synthetic data — keep it that way in your demos: **no customer names or
+internal identifiers, ever.**
 
 ## Quickstart
 

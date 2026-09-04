@@ -1,6 +1,6 @@
 ---
 name: demo-video-builder
-description: Use when building a polished, voice-narrated demo video from a screen recording — turning a raw capture of a product demo into a shareable MP4 with cut lag, scrubbed privacy leaks, synced VO, optional animated opener/outro. Triggers on "build a demo video", "narrate this recording", "make a demo from this screen capture", "cut the thinking lags and add voiceover".
+description: Use when building a polished, voice-narrated demo video from a screen recording — turning a raw capture of a product demo into a shareable MP4 with cut lag, scrubbed privacy leaks, synced VO, optional animated opener/outro. v2 adds cinematic "story rebuilds" — animated b-roll acts (problem-statement openers, interstitials, finales) word-synced to a multi-voice cast, and re-voicing existing recordings with placed narration beats. Triggers on "build a demo video", "narrate this recording", "make a demo from this screen capture", "cut the thinking lags and add voiceover", "add a wow animated opener", "multi voice demo", "b-roll story animation", "turn this demo into an animated story".
 ---
 
 # Demo Video Builder
@@ -84,3 +84,33 @@ python build.py         # rebuild the video
 
 Detailed, copy-pasteable ffmpeg and the pitfalls that will bite you are in `references/ffmpeg-gotchas.md`.
 Read it before debugging — most "it silently produced a stale/black/soundless file" issues are listed there.
+
+## v2 — Story rebuilds: b-roll acts + a multi-voice cast
+
+The v1 pipeline polishes **one recording**. The v2 workflow rebuilds a demo as a **film**:
+animated story acts around (and over) the real product footage, narrated by a cast of voices.
+Use it when someone says "make this a wow demo", "add an animated problem-statement story",
+or "multi-voice this".
+
+The five moves:
+
+1. **Review the source** — extract frames (`ffmpeg -vf fps=1/12`) and transcribe the audio
+   (faster-whisper) to map its structure: which stretches are slides (replace with b-roll),
+   which are real product recordings (keep, re-voice), and the exact cut boundaries.
+2. **Write the script** — `vo_script.py`: cast 2–3 voices (narrator / guide / character),
+   sequential `SCENES` for the animated acts, `PLACED` beats pinned to the recording's
+   original narration offsets. → `references/multi-voice.md`
+3. **Generate VO** — `python gen_vo_multivoice.py` renders every phrase with word-level
+   timestamps and emits `scenes/timing_<name>.js` for the scenes.
+4. **Build the b-roll scenes** — clock-driven HTML (`scenes/broll_opener.example.html` is a
+   working template): one pure `frame(t)`, every element keyed to spoken words via `wt()`,
+   canvas particle fields ("flakes"), optional Ken Burns camera + spotlight over a diagram
+   frame. QA with `node shot.js <scene> <t> <png>` stills, then render with
+   `node render_scene.js <scene> <vo.mp3> <out.mp4>`. → `references/broll-scenes.md`
+5. **Assemble** — mux placed VO over the video-only recording cuts, concat all segments,
+   one `loudnorm` on the final mix. → `assemble.example.sh`
+
+Hard rules carried over from v1: real screens only in recording segments (b-roll is clearly
+stylized, fictional-branded, and labeled synthetic); privacy-scrub every recorded frame; and
+**no customer names or internal identifiers anywhere** — in scenes, VO text, file names, or
+example data.

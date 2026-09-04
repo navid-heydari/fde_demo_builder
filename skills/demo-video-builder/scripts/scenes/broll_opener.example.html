@@ -1,0 +1,190 @@
+<!doctype html>
+<!-- broll_opener.example.html — a word-synced, multi-voice b-roll opener template (v2).
+
+     Matches vo_script.example.py (fictional "Acme Utilities", synthetic numbers).
+     Copy next to your project's scenes/, rename, rewrite the layers for YOUR story.
+
+     THE CONTRACT (render_scene.js + gen_vo_multivoice.py depend on all of it):
+       - fixed 1280x720 #stage, auto-scaled to the window (renders at 1920x1080 via 1.5 DPR)
+       - loads scenes/timing_<name>.js  ->  window.PHASES / window.WORDS
+       - ONE pure function frame(t): every visual is a function of the clock, no
+         accumulated state — that is what makes __seek(t) QA stills possible
+       - ?render + window.__start(): the renderer starts the clock WITH the recording
+       - DELAY = 0.45 must equal render_scene.js's adelay=450 (the sync constant)
+       - wt(phase, word, n) -> the clock time the nth occurrence of `word` is spoken;
+         key every element to words, not hand-tuned seconds, and re-renders stay in sync
+     Gotchas and the full method: ../references/broll-scenes.md                      -->
+<html><head><meta charset="utf-8"><title>Acme Utilities — b-roll opener</title>
+<script src="timing_opener.js"></script>
+<script>
+/* Fallback stub so the template previews in a plain browser BEFORE the VO exists.
+   Real values come from scenes/timing_opener.js written by gen_vo_multivoice.py. */
+if (!window.PHASES) {
+  window.PHASES = { total: 30, phases: [
+    { name: "cold",    start: 0,  dur: 10 }, { name: "ops",     start: 10.4, dur: 6 },
+    { name: "promise", start: 16.8, dur: 9 }, { name: "handoff", start: 26.2, dur: 3.8 }]};
+  window.WORDS = {};   // wt() falls back to each phase's start
+}
+</script>
+<style>
+/* ---- palette: dark default. For a light "paper" identity swap the :root block for:
+   --bg0:#F7F5F0;--bg1:#F7F5F0;--ink:#2E2A26;--sub:#6E675E;--accent:#C74634;
+   --accent2:#E05B45;--alt:#5B84A8;--card:#FFFFFF;--edge:rgba(46,42,38,.14)   ---- */
+:root{--bg0:#12414F;--bg1:#041820;--ink:#E9F3F9;--sub:#A7C2CB;
+  --accent:#E56B5E;--accent2:#F0897B;--alt:#81A9AB;--cream:#ECDEC3;
+  --card:rgba(43,76,92,.88);--edge:rgba(129,169,171,.32)}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#000;overflow:hidden}
+body{font-family:'Segoe UI',Inter,system-ui,sans-serif;color:var(--ink)}
+#stage{position:absolute;left:50%;top:50%;width:1280px;height:720px;margin:-360px 0 0 -640px;
+  transform-origin:50% 50%;overflow:hidden;
+  background:radial-gradient(130% 100% at 50% 30%,var(--bg0),var(--bg1))}
+canvas{position:absolute;inset:0}
+.layer{position:absolute;inset:0;opacity:0;transition:opacity .55s ease;pointer-events:none}
+.layer.on{opacity:1}
+/* stat cards: pop on their spoken word */
+.stat{position:absolute;background:var(--card);border:1px solid var(--edge);border-radius:14px;
+  padding:12px 18px;opacity:0;transform:translateY(14px) scale(.94);
+  transition:.5s cubic-bezier(.34,1.5,.4,1)}
+.stat.on{opacity:1;transform:none}
+.stat .n{font-size:27px;font-weight:800;color:var(--cream)}
+.stat .l{font-size:11px;color:var(--sub);margin-top:2px}
+/* character voice card (second voice): EQ bars animate while the line plays */
+#voice{position:absolute;left:50%;top:50%;width:440px;margin:-90px 0 0 -220px;
+  background:rgba(12,28,36,.96);border:1px solid var(--edge);border-radius:18px;
+  padding:20px 24px;box-shadow:0 24px 70px rgba(0,0,0,.6);opacity:0;
+  transform:translateY(16px) scale(.95);transition:.55s cubic-bezier(.2,.8,.3,1.25)}
+#voice.on{opacity:1;transform:none}
+#voice .h{font-size:10.5px;font-weight:800;letter-spacing:.22em;color:var(--accent2)}
+#eq{display:flex;gap:5px;align-items:flex-end;height:52px;margin:16px 0 10px}
+#eq i{flex:1;background:linear-gradient(180deg,var(--alt),var(--sub));border-radius:3px;height:8px}
+#voice .q{font-size:16px;font-style:italic;line-height:1.5}
+#voice .q b{color:var(--cream)}
+/* title reveal */
+#titleL{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding-bottom:50px}
+#tk{font-size:13px;font-weight:700;letter-spacing:.38em;text-transform:uppercase;color:var(--alt);
+  opacity:0;transform:translateY(10px);transition:.6s ease}
+#tk.on{opacity:1;transform:none}
+#th{font-size:64px;font-weight:800;letter-spacing:-1.8px;margin-top:10px;opacity:0;
+  transform:translateY(16px);transition:.8s cubic-bezier(.2,.8,.2,1)}
+#th.on{opacity:1;transform:none}
+#th b{color:var(--accent2)}
+#ts{font-size:18px;color:var(--sub);margin-top:12px;opacity:0;transition:.6s ease}
+#ts.on{opacity:1}
+/* handoff chain pills */
+#chain{position:absolute;left:0;right:0;bottom:120px;display:flex;gap:12px;justify-content:center}
+#chain span{background:var(--card);border:1.5px solid var(--edge);border-radius:13px;
+  padding:11px 18px;font-size:13px;font-weight:800;letter-spacing:.08em;color:var(--alt);
+  opacity:0;transform:translateY(10px) scale(.9);transition:.45s cubic-bezier(.2,.8,.3,1.35)}
+#chain span.on{opacity:1;transform:none}
+#fadeb{position:absolute;inset:0;background:#000;z-index:90;pointer-events:none;opacity:1}
+</style></head><body>
+<div id="stage">
+  <canvas id="bg" width="1280" height="720"></canvas>
+
+  <!-- PHASE: cold — the stakes -->
+  <div class="layer on" id="coldL">
+    <div class="stat" id="st1" style="left:120px;bottom:90px"><div class="n">400</div>
+      <div class="l">substations &middot; fictional network</div></div>
+    <div class="stat" id="st2" style="right:120px;bottom:90px"><div class="n" style="color:var(--accent2)">1</div>
+      <div class="l">number that decides the morning</div></div>
+  </div>
+
+  <!-- PHASE: ops — the character voice moment -->
+  <div id="voice">
+    <div class="h">CONTROL ROOM &middot; 03:12</div>
+    <div id="eq"></div>
+    <div class="q">&ldquo;I&rsquo;ve got <b>twelve alerts</b> and <b>one crew</b>.
+      Which one is real?&rdquo;</div>
+  </div>
+
+  <!-- PHASE: promise — the title reveal -->
+  <div class="layer" id="titleL">
+    <div id="tk">A fictional utility &middot; synthetic data &middot; real platform</div>
+    <h1 id="th">Acme Utilities, <b>in time</b></h1>
+    <div id="ts">how one platform answers the 3 a.m. question</div>
+  </div>
+
+  <!-- PHASE: handoff -->
+  <div class="layer" id="handL">
+    <div id="chain"><span id="c1">SENSE</span><span id="c2">STREAM</span>
+      <span id="c3">DECIDE</span><span id="c4">ACT</span></div>
+  </div>
+
+  <div id="fadeb"></div>
+</div>
+<script>
+/* ================= the standard boot (copy verbatim into new scenes) ================= */
+const PHASES=window.PHASES, WORDSJ=window.WORDS;
+const P={};PHASES.phases.forEach(p=>P[p.name]=p.start);
+const D={};PHASES.phases.forEach(p=>D[p.name]=p.dur);
+const TOTAL=PHASES.total;
+const RENDER=location.search.includes('render');
+const DELAY=RENDER?0.45:0;                     // MUST match render_scene.js adelay=450
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const rmp=(t,a,b)=>clamp((t-a)/(b-a),0,1);     // 0..1 ramp between two times
+const eio=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;   // ease in-out
+function on(el,b){el&&el.classList.toggle('on',b)}
+/* word time: when the nth occurrence of `w` is SPOKEN in `ph` (falls back to phase start) */
+function wt(ph,w,n=1){const ws=WORDSJ[ph]||[];let c=0;const k=w.toLowerCase();
+  for(const x of ws){if(x.w.toLowerCase().replace(/[^a-z0-9]/g,'')===k){c++;if(c===n)return P[ph]+x.t;}}
+  return P[ph];}
+let _s=42;function rnd(){_s=(_s*1103515245+12345)&0x7fffffff;return _s/0x7fffffff;}  // deterministic
+function fit(){$('#stage').style.transform=`scale(${Math.min(innerWidth/1280,innerHeight/720)})`;}
+addEventListener('resize',fit);fit();
+for(let i=0;i<26;i++){const b=document.createElement('i');$('#eq').appendChild(b);}
+
+/* ================= canvas: the ambient "flake" field ================= */
+const DPR=Math.min(2,window.devicePixelRatio||1);
+const cv=$('#bg'),cx2=cv.getContext('2d');
+cv.width=1280*DPR;cv.height=720*DPR;cv.style.width='1280px';cv.style.height='720px';cx2.scale(DPR,DPR);
+const FC=['#E56B5E','#F0897B','#8BAD92','#ECDEC3','#81A9AB','#D9A441'];   // swap per palette
+const AMB=[];for(let i=0;i<48;i++)AMB.push({o:rnd(),v:.5+rnd()*.9,c:FC[i%6],r:2.3+rnd()*3.2});
+function drawBG(t){
+  cx2.clearRect(0,0,1280,720);
+  for(const f of AMB){        // slow upward drift, per-flake twinkle
+    const y=((f.o*900-t*18*f.v)%900+900)%900-60;
+    cx2.globalAlpha=.13+.10*Math.sin(t*.8+f.o*9);
+    cx2.fillStyle=f.c;cx2.beginPath();cx2.arc(f.o*1273,y,f.r*.8,0,7);cx2.fill();}
+  cx2.globalAlpha=1;
+}
+
+/* ================= frame(t): pure — every visual derived from the clock ================= */
+function frame(t){
+  /* fade from black in, to black out (TOTAL comes from the measured VO) */
+  $('#fadeb').style.opacity=t<0.02?1:Math.max(1-rmp(t,0.02,1.0),rmp(t,TOTAL+0.7,TOTAL+1.8));
+  drawBG(t);
+  const OPS=P.ops, PR=P.promise, HA=P.handoff;
+  /* cold: stats land on their spoken words */
+  $('#coldL').classList.toggle('on',t<OPS-0.25);
+  on($('#st1'),t>=wt('cold','four')-0.4);
+  on($('#st2'),t>=wt('cold','number')-0.5);
+  /* ops: the character card + live EQ while the second voice speaks */
+  on($('#voice'),t>=OPS-0.15&&t<PR-0.2);
+  if(t>=OPS&&t<=OPS+D.ops)
+    $$('#eq i').forEach((b,i)=>{b.style.height=(6+Math.abs(Math.sin(t*9+i*1.7))*(28+13*Math.sin(t*3+i)))+'px';});
+  /* promise: title reveal keyed to words */
+  $('#titleL').classList.toggle('on',t>=PR-0.15&&t<HA-0.2);
+  on($('#tk'),t>=PR+0.1);
+  on($('#th'),t>=wt('promise','platform')-0.6);
+  on($('#ts'),t>=wt('promise','answers')-0.6);
+  /* handoff: chain pills stagger in */
+  $('#handL').classList.toggle('on',t>=HA-0.15);
+  ['c1','c2','c3','c4'].forEach((id,i)=>on($('#'+id),t>=HA+0.2+i*0.25));
+}
+
+/* ================= loop + contract (__start / __seek) — copy verbatim ================= */
+let t0=null;
+function loop(now){
+  if(t0===null)t0=now;
+  let t=(now-t0)/1000-DELAY;if(t<0)t=0;
+  frame(t);
+  if(!RENDER&&t>TOTAL+3)t0=now;               // preview replays; render runs once
+  if(t<TOTAL+2.2||!RENDER)requestAnimationFrame(loop);
+}
+window.__start=()=>{t0=null;requestAnimationFrame(loop);};
+window.__seek=(t)=>{frame(t);};               // deterministic stills for shot.js QA
+if(!RENDER)requestAnimationFrame(loop);
+</script></body></html>
